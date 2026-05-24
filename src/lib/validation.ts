@@ -1,3 +1,4 @@
+import { findRequiredSchemaGaps } from './heatmapSchema';
 import type { HeatmapModel, ValidationResult } from './types';
 
 const REQUIRED_TOP_LEVEL = ['targetRole', 'requirements', 'lenses', 'cells'] as const;
@@ -90,6 +91,8 @@ export function validateHeatmapModel(input: unknown): ValidationResult {
       lensColumnKeys.add(`${lens.id}:${column.id}`);
     }
   }
+
+  errors.push(...findRequiredSchemaGaps(model.lenses));
 
   const cellKeys = new Set<string>();
   for (const cell of model.cells) {

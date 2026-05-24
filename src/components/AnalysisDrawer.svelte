@@ -7,20 +7,18 @@
 
 <aside class:visible={Boolean(context)} class:pinned class="analysis-drawer" aria-live="polite">
   {#if context}
-    <div class="drawer-title">
-      <div>
-        <p>{pinned ? 'Pinned analysis' : 'Live analysis'}</p>
-        <h2>{context.requirement.label} · {context.column.label}</h2>
-      </div>
-      <strong>{context.cell.score > 0 ? '+' : ''}{context.cell.score.toFixed(1)}</strong>
-    </div>
-    {#if context.cell.scoreLabel}
-      <p class="score-label">{context.cell.scoreLabel}</p>
-    {/if}
-
     <div class="drawer-grid">
-      <section>
-        <span>Role asks</span>
+      <section class="drawer-summary">
+        <div class="drawer-title">
+          <div>
+            <p>{pinned ? 'Pinned analysis' : 'Live analysis'}</p>
+            <h2>{context.requirement.label} · {context.column.label}</h2>
+          </div>
+          <strong>{context.cell.score > 0 ? '+' : ''}{context.cell.score.toFixed(1)}</strong>
+        </div>
+        {#if context.cell.scoreLabel}
+          <p class="score-label">{context.cell.scoreLabel}</p>
+        {/if}
         <p>{context.cell.summary}</p>
         <ul>
           {#each [...(context.requirement.roleSignals ?? []), ...context.cell.roleEvidence].slice(0, 5) as item}
@@ -31,7 +29,7 @@
       </section>
 
       <section>
-        <span>Your proof</span>
+        <span>Why strong / evidence</span>
         <p>{context.cell.whyGood}</p>
         <ul>
           {#each context.cell.evidence.slice(0, 4) as item}
@@ -41,7 +39,7 @@
       </section>
 
       <section>
-        <span>Gap and next move</span>
+        <span>Gap / next moves</span>
         <p>{context.cell.whyGap}</p>
         <ul>
           {#each context.cell.nextActions.slice(0, 4) as item}
@@ -54,9 +52,10 @@
     <div class="drawer-title">
       <div>
         <p>Keyboard ready</p>
-        <h2>Focus any heat cell to preview analysis</h2>
+        <h2>No cell selected</h2>
+        <div class="score-label">Focus any heat cell to preview the role ask, your proof, and the next move. Arrow keys update this panel live.</div>
       </div>
-      <strong>↔</strong>
+      <strong>0.0</strong>
     </div>
   {/if}
 </aside>

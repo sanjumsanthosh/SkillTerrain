@@ -46,7 +46,7 @@ Return ONLY valid JSON matching this TypeScript-like shape:
       "title": "Fit Lens",
       "description": "Need/current/gap view",
       "columns": [
-        { "id": "need", "label": "Need Match", "description": "whether the role's need is clearly understood and mapped to this requirement", "valueHint": "1 means the need is clear and well mapped; -1 means the need is critical but weakly mapped" }
+        { "id": "need", "label": "Need Match", "description": "whether the role's need is clearly understood and mapped to this requirement", "valueHint": "5 means highly favorable; 0 means mixed; -5 means critical gap" }
       ]
     }
   ],
@@ -74,12 +74,13 @@ Required lenses and columns:
 4. Roadmap Lens: Fast Win, Resume Impact, Difficulty, Time to Proof, Portfolio Value, Priority Fit.
 
 Scoring rules:
-- Use signed numeric scores from -1 to 1.
-- A score of 1 always means favorable/green for the candidate.
+- Requirement importance is role-side criticality only: use 0 to 5, never negative.
+- Use signed numeric scores from -5 to 5.
+- A score of 5 always means favorable/green for the candidate.
 - A score of 0 means neutral, unclear, or mixed.
-- A score of -1 always means unfavorable/red for the candidate.
-- For columns that sound negative, such as Gap, Risk, Difficulty, or Time to Proof, score the candidate-favorable inverse. Example: a hard critical gap is -1; an easy manageable gap is 1.
-- Put the raw meaning in summary or scoreLabel when helpful, for example "high difficulty" with score -0.8, or "fast win" with score 0.9.
+- A score of -5 always means unfavorable/red for the candidate.
+- For columns that sound negative, such as Gap, Risk, Difficulty, or Time to Proof, score the candidate-favorable inverse. Example: a hard critical gap is -5; an easy manageable gap is 5.
+- Put the raw meaning in summary or scoreLabel when helpful, for example "high difficulty" with score -4, or "fast win" with score 4.
 - Every requirement must have one cell for every lens column.
 - Every cell must include roleEvidence that anchors the score to the job posting's actual need/task. This is separate from my personal evidence.
 - Include 12-30 role requirements. Keep labels short enough for heatmap headers.

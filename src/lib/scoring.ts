@@ -34,18 +34,18 @@ export function getActiveCell(job: SkillTerrainJob, lensId: string, requirementI
 }
 
 export function scoreColor(score: number): string {
-  const bounded = Math.max(-1, Math.min(1, score));
-  if (bounded <= -0.75) return '#9a3412';
-  if (bounded <= -0.5) return '#ea580c';
-  if (bounded < -0.15) return '#fdba74';
-  if (bounded < 0.15) return '#f8fafc';
-  if (bounded < 0.5) return '#bbf7d0';
-  if (bounded < 0.75) return '#22c55e';
+  const bounded = Math.max(-5, Math.min(5, score));
+  if (bounded <= -3.75) return '#9a3412';
+  if (bounded <= -2.5) return '#ea580c';
+  if (bounded < -0.75) return '#fdba74';
+  if (bounded < 0.75) return '#f8fafc';
+  if (bounded < 2.5) return '#bbf7d0';
+  if (bounded < 3.75) return '#22c55e';
   return '#166534';
 }
 
 export function textColor(score: number): string {
-  if (score >= 0.5 || score <= -0.5) return '#f8fafc';
+  if (score >= 2.5 || score <= -2.5) return '#f8fafc';
   return '#172033';
 }
 
@@ -56,7 +56,7 @@ export function readinessScore(model: HeatmapModel): number {
   }
 
   const average = currentCells.reduce((sum, cell) => sum + cell.score, 0) / currentCells.length;
-  return Math.round(((average + 1) / 2) * 100);
+  return Math.round(((average + 5) / 10) * 100);
 }
 
 export function compareJobs(left: SkillTerrainJob, right: SkillTerrainJob): ComparisonResult {
@@ -73,7 +73,7 @@ export function compareJobs(left: SkillTerrainJob, right: SkillTerrainJob): Comp
         requirementLabel: leftRequirement.label,
         lensLabel: 'All',
         columnLabel: 'Requirement',
-        leftScore: -1,
+        leftScore: -5,
         status: 'left-only',
       });
       continue;
@@ -116,7 +116,7 @@ export function compareJobs(left: SkillTerrainJob, right: SkillTerrainJob): Comp
         requirementLabel: rightRequirement.label,
         lensLabel: 'All',
         columnLabel: 'Requirement',
-        rightScore: 1,
+        rightScore: 5,
         status: 'right-only',
       });
     }
@@ -135,10 +135,10 @@ export function deltaColor(cell: ComparisonCell): string {
   if (cell.status === 'left-only') return '#fef3c7';
   if (cell.status === 'right-only') return '#dbeafe';
   const delta = cell.delta ?? 0;
-  if (delta >= 0.75) return '#166534';
-  if (delta > 0.1) return '#86efac';
+  if (delta >= 2.5) return '#166534';
+  if (delta > 0.5) return '#86efac';
   if (delta === 0) return '#f1f5f9';
-  if (delta <= -0.75) return '#9a3412';
+  if (delta <= -2.5) return '#9a3412';
   return '#fed7aa';
 }
 

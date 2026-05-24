@@ -13,11 +13,11 @@ SkillTerrain is a browser-only static app. It does not call an LLM or backend di
 
 All data is stored in `localStorage`. Use workspace export/import JSON for backups.
 
-Heatmap scores use one consistent signed scale:
+Heatmap cell scores use one consistent signed scale:
 
-- `1` is favorable and green.
+- `5` is favorable and green.
 - `0` is neutral or mixed.
-- `-1` is unfavorable and red.
+- `-5` is unfavorable and red.
 
 Columns such as gap, risk, difficulty, or time-to-proof still use that candidate-favorability scale. For example, a hard critical gap should score negative, while an easy fast win should score positive.
 

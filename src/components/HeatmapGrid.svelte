@@ -4,6 +4,17 @@
   import { getActiveCell, getCell, readinessScore, scoreColor, textColor } from '../lib/scoring';
   import type { ActiveCellContext, CellPointer, HeatmapLens, ScoreCell, SkillTerrainJob } from '../lib/types';
 
+  type HeatmapSizing = {
+    density: 'roomy' | 'standard' | 'compact' | 'dense';
+    cellWidth: number;
+    cellHeight: number;
+    metricWidth: number;
+    headerHeight: number;
+    requirementFont: number;
+    metricFont: number;
+    cellFont: number;
+  };
+
   export let job: SkillTerrainJob;
 
   let pointer: CellPointer | undefined;
@@ -198,8 +209,75 @@
     return Math.round(((average + 5) / 10) * 100);
   }
 
-  function heatmapTableWidth(): string {
-    return `${118 + job.heatmap.requirements.length * 35}px`;
+  function heatmapSizing(lens: HeatmapLens): HeatmapSizing {
+    const requirementCount = job.heatmap.requirements.length;
+    const totalCells = requirementCount * lens.columns.length;
+
+    if (requirementCount >= 24 || totalCells >= 168) {
+      return {
+        density: 'dense',
+        cellWidth: 26,
+        cellHeight: 20,
+        metricWidth: 98,
+        headerHeight: 92,
+        requirementFont: 0.54,
+        metricFont: 0.54,
+        cellFont: 0.52,
+      };
+    }
+
+    if (requirementCount >= 16 || totalCells >= 112) {
+      return {
+        density: 'compact',
+        cellWidth: 30,
+        cellHeight: 22,
+        metricWidth: 108,
+        headerHeight: 98,
+        requirementFont: 0.57,
+        metricFont: 0.56,
+        cellFont: 0.55,
+      };
+    }
+
+    if (requirementCount <= 10) {
+      return {
+        density: 'roomy',
+        cellWidth: 40,
+        cellHeight: 26,
+        metricWidth: 128,
+        headerHeight: 112,
+        requirementFont: 0.64,
+        metricFont: 0.62,
+        cellFont: 0.6,
+      };
+    }
+
+    return {
+      density: 'standard',
+      cellWidth: 34,
+      cellHeight: 24,
+      metricWidth: 118,
+      headerHeight: 104,
+      requirementFont: 0.6,
+      metricFont: 0.58,
+      cellFont: 0.57,
+    };
+  }
+
+  function heatmapTableStyle(lens: HeatmapLens): string {
+    const sizing = heatmapSizing(lens);
+    const width = sizing.metricWidth + job.heatmap.requirements.length * (sizing.cellWidth + 1);
+    return [
+      `--metric-width:${sizing.metricWidth}px`,
+      `--cell-width:${sizing.cellWidth}px`,
+      `--cell-height:${sizing.cellHeight}px`,
+      `--header-height:${sizing.headerHeight}px`,
+      `--requirement-font:${sizing.requirementFont}rem`,
+      `--metric-font:${sizing.metricFont}rem`,
+      `--cell-font:${sizing.cellFont}rem`,
+      `width:${width}px`,
+      `min-width:${width}px`,
+    ].join(';');
   }
 </script>
 
@@ -243,7 +321,7 @@
       </div>
 
       <div class="heatmap-scroll">
-        <table class="heatmap-table" style={`width:${heatmapTableWidth()};min-width:${heatmapTableWidth()}`}>
+        <table class={`heatmap-table density-${heatmapSizing(lens).density}`} style={heatmapTableStyle(lens)}>
           <colgroup>
             <col class="metric-col" />
             {#each job.heatmap.requirements as _requirement}
@@ -281,7 +359,7 @@
                         on:click={() => pin(lens.id, requirement.id, column.id)}
                         on:keydown={(event) => move(event, lens, rowIndex, requirementIndex)}
                       >
-                        {cell.score > 0 ? '+' : ''}{cell.score.toFixed(1)}
+                        <span class="heat-value">{cell.score > 0 ? '+' : ''}{cell.score.toFixed(1)}</span>
                       </button>
                     {:else}
                       <span class="missing-cell">?</span>

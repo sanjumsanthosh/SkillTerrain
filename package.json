@@ -1,0 +1,24 @@
+{
+  "name": "skillterrain",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "dependencies": {
+    "svelte": "^5.38.8"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^6.1.3",
+    "@tsconfig/svelte": "^5.0.4",
+    "@types/node": "^24.3.0",
+    "svelte-check": "^4.3.1",
+    "typescript": "^5.9.2",
+    "tslib": "^2.8.1",
+    "vite": "^7.1.7"
+  }
+}

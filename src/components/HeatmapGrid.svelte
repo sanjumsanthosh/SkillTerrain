@@ -27,16 +27,79 @@
     pointer = pinnedPointer;
   }
 
-  function clearPin(): void {
+  function clearSelection(): void {
     pinnedPointer = undefined;
+    pointer = undefined;
   }
 
   function move(event: KeyboardEvent, lens: HeatmapLens, rowIndex: number, requirementIndex: number): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      pin(lens.id, job.heatmap.requirements[requirementIndex].id, lens.columns[rowIndex].id);
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      clearSelection();
+      return;
+    }
+
+    moveFromPosition(event, displayLenses.findIndex((item) => item.id === lens.id), rowIndex, requirementIndex);
+  }
+
+  function handleGlobalKeydown(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement | null;
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      clearSelection();
+      return;
+    }
+
+    if (target?.closest('[data-cell]')) {
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      if (activePointer) {
+        event.preventDefault();
+        pin(activePointer.lensId, activePointer.requirementId, activePointer.columnId);
+      }
+      return;
+    }
+
+    if (!['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(event.key)) {
+      return;
+    }
+
+    const activePosition = pointerToPosition(activePointer);
+    if (activePosition) {
+      moveFromPosition(event, activePosition.lensIndex, activePosition.rowIndex, activePosition.requirementIndex);
+      return;
+    }
+
+    event.preventDefault();
+    const firstLens = displayLenses[0];
+    const firstRequirement = job.heatmap.requirements[0];
+    const firstColumn = firstLens?.columns[0];
+    if (firstLens && firstRequirement && firstColumn) {
+      preview(firstLens.id, firstRequirement.id, firstColumn.id);
+      focusCell(firstLens.id, firstColumn.id, firstRequirement.id);
+    }
+  }
+
+  function moveFromPosition(event: KeyboardEvent, lensIndex: number, rowIndex: number, requirementIndex: number): void {
     const requirementCount = job.heatmap.requirements.length;
-    const rowCount = lens.columns.length;
+    const currentLens = displayLenses[lensIndex];
+    if (!currentLens) {
+      return;
+    }
+
+    const rowCount = currentLens.columns.length;
     let nextRow = rowIndex;
     let nextRequirement = requirementIndex;
-    let nextLensIndex = displayLenses.findIndex((item) => item.id === lens.id);
+    let nextLensIndex = lensIndex;
 
     if (event.key === 'ArrowRight') nextRequirement = Math.min(requirementCount - 1, requirementIndex + 1);
     else if (event.key === 'ArrowLeft') nextRequirement = Math.max(0, requirementIndex - 1);
@@ -46,14 +109,6 @@
     } else if (event.key === 'ArrowUp') {
       if (rowIndex > 0) nextRow = rowIndex - 1;
       else nextLensIndex = Math.max(0, nextLensIndex - 1);
-    } else if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      pin(lens.id, job.heatmap.requirements[requirementIndex].id, lens.columns[rowIndex].id);
-      return;
-    } else if (event.key === 'Escape') {
-      event.preventDefault();
-      clearPin();
-      return;
     } else {
       return;
     }
@@ -62,8 +117,28 @@
     const nextLens = displayLenses[nextLensIndex];
     const nextColumn = nextLens.columns[Math.min(nextRow, nextLens.columns.length - 1)];
     const nextRequirementItem = job.heatmap.requirements[nextRequirement];
+    pinnedPointer = undefined;
     preview(nextLens.id, nextRequirementItem.id, nextColumn.id);
     focusCell(nextLens.id, nextColumn.id, nextRequirementItem.id);
+  }
+
+  function pointerToPosition(cellPointer: CellPointer | undefined):
+    | { lensIndex: number; rowIndex: number; requirementIndex: number }
+    | undefined {
+    if (!cellPointer) {
+      return undefined;
+    }
+
+    const lensIndex = displayLenses.findIndex((lens) => lens.id === cellPointer.lensId);
+    const lens = displayLenses[lensIndex];
+    const rowIndex = lens?.columns.findIndex((column) => column.id === cellPointer.columnId) ?? -1;
+    const requirementIndex = job.heatmap.requirements.findIndex((requirement) => requirement.id === cellPointer.requirementId);
+
+    if (lensIndex < 0 || rowIndex < 0 || requirementIndex < 0) {
+      return undefined;
+    }
+
+    return { lensIndex, rowIndex, requirementIndex };
   }
 
   function focusCell(lensId: string, columnId: string, requirementId: string): void {
@@ -102,7 +177,33 @@
 
     return missing;
   }
+
+  function lensReadiness(lens: HeatmapLens): number {
+    const scores: number[] = [];
+
+    for (const requirement of job.heatmap.requirements) {
+      for (const column of lens.columns) {
+        const cell = getCell(job.heatmap, requirement.id, lens.id, column.id);
+        if (cell) {
+          scores.push(cell.score);
+        }
+      }
+    }
+
+    if (!scores.length) {
+      return 0;
+    }
+
+    const average = scores.reduce((sum, item) => sum + item, 0) / scores.length;
+    return Math.round(((average + 5) / 10) * 100);
+  }
+
+  function heatmapTableWidth(): string {
+    return `${118 + job.heatmap.requirements.length * 35}px`;
+  }
 </script>
+
+<svelte:window on:keydown={handleGlobalKeydown} />
 
 <section class="heatmap-page">
   <div class="heatmap-header">
@@ -118,7 +219,7 @@
   </div>
 
   <div class="keyboard-hint">
-    Arrow keys preview cells live. Enter/Space pins analysis. Escape unpins.
+    Arrow keys preview cells live. Enter/Space pins analysis. Escape clears.
   </div>
 
   {#if schemaGaps.length || missingCellCount}
@@ -138,10 +239,17 @@
           <h3 id={`${lens.id}-title`}>{lens.title}</h3>
           <p>{lens.description}</p>
         </div>
+        <div class="lens-score">{lensReadiness(lens)}% lens score</div>
       </div>
 
       <div class="heatmap-scroll">
-        <table class="heatmap-table">
+        <table class="heatmap-table" style={`width:${heatmapTableWidth()};min-width:${heatmapTableWidth()}`}>
+          <colgroup>
+            <col class="metric-col" />
+            {#each job.heatmap.requirements as _requirement}
+              <col class="requirement-col" />
+            {/each}
+          </colgroup>
           <thead>
             <tr>
               <th class="metric-label">Metric</th>

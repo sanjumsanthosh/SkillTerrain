@@ -72,6 +72,7 @@ Required lenses and columns:
 2. Evidence Lens: Work/Professional, GitHub, Notes, Learning, Public Proof, Confidence.
 3. Interview Lens: Resume Claim, Story, Explainability, Risk Control, Proof Coverage, Safe Wording.
 4. Roadmap Lens: Fast Win, Resume Impact, Difficulty, Time to Proof, Portfolio Value, Priority Fit.
+- Do not omit, rename away, summarize, or compact any required lens or column. The app expects every requirement to have all 24 required cells.
 
 Scoring rules:
 - Requirement importance is role-side criticality only: use 0 to 5, never negative.

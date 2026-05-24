@@ -13,6 +13,8 @@ SkillTerrain is a browser-only static app. It does not call an LLM or backend di
 
 All data is stored in `localStorage`. Use workspace export/import JSON for backups.
 
+Each valid heatmap uses the full SkillTerrain matrix contract: 4 required lenses, 24 required columns, and one score cell for every requirement/column pair. The app warns when older or incomplete imports are missing expected cells.
+
 Heatmap cell scores use one consistent signed scale:
 
 - `5` is favorable and green.

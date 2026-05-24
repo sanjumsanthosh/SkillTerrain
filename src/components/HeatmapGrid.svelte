@@ -1,7 +1,8 @@
 <script lang="ts">
   import AnalysisDrawer from './AnalysisDrawer.svelte';
+  import { expandRequiredLenses, findRequiredSchemaGaps } from '../lib/heatmapSchema';
   import { getActiveCell, getCell, readinessScore, scoreColor, textColor } from '../lib/scoring';
-  import type { ActiveCellContext, CellPointer, HeatmapLens, SkillTerrainJob } from '../lib/types';
+  import type { ActiveCellContext, CellPointer, HeatmapLens, ScoreCell, SkillTerrainJob } from '../lib/types';
 
   export let job: SkillTerrainJob;
 
@@ -13,6 +14,9 @@
     ? withPinned(getActiveCell(job, activePointer.lensId, activePointer.requirementId, activePointer.columnId), Boolean(pinnedPointer))
     : undefined;
   $: score = readinessScore(job.heatmap);
+  $: displayLenses = expandRequiredLenses(job.heatmap.lenses);
+  $: schemaGaps = findRequiredSchemaGaps(job.heatmap.lenses);
+  $: missingCellCount = countMissingCells(job.heatmap.cells, job.heatmap.requirements.map((requirement) => requirement.id), displayLenses);
 
   function preview(lensId: string, requirementId: string, columnId: string): void {
     pointer = { lensId, requirementId, columnId, pinned: false };
@@ -32,13 +36,13 @@
     const rowCount = lens.columns.length;
     let nextRow = rowIndex;
     let nextRequirement = requirementIndex;
-    let nextLensIndex = job.heatmap.lenses.findIndex((item) => item.id === lens.id);
+    let nextLensIndex = displayLenses.findIndex((item) => item.id === lens.id);
 
     if (event.key === 'ArrowRight') nextRequirement = Math.min(requirementCount - 1, requirementIndex + 1);
     else if (event.key === 'ArrowLeft') nextRequirement = Math.max(0, requirementIndex - 1);
     else if (event.key === 'ArrowDown') {
       if (rowIndex < rowCount - 1) nextRow = rowIndex + 1;
-      else nextLensIndex = Math.min(job.heatmap.lenses.length - 1, nextLensIndex + 1);
+      else nextLensIndex = Math.min(displayLenses.length - 1, nextLensIndex + 1);
     } else if (event.key === 'ArrowUp') {
       if (rowIndex > 0) nextRow = rowIndex - 1;
       else nextLensIndex = Math.max(0, nextLensIndex - 1);
@@ -55,7 +59,7 @@
     }
 
     event.preventDefault();
-    const nextLens = job.heatmap.lenses[nextLensIndex];
+    const nextLens = displayLenses[nextLensIndex];
     const nextColumn = nextLens.columns[Math.min(nextRow, nextLens.columns.length - 1)];
     const nextRequirementItem = job.heatmap.requirements[nextRequirement];
     preview(nextLens.id, nextRequirementItem.id, nextColumn.id);
@@ -81,6 +85,23 @@
       pointer: { ...context.pointer, pinned },
     };
   }
+
+  function countMissingCells(cells: ScoreCell[], requirementIds: string[], lenses: HeatmapLens[]): number {
+    const actual = new Set(cells.map((cell) => `${cell.requirementId}:${cell.lensId}:${cell.columnId}`));
+    let missing = 0;
+
+    for (const requirementId of requirementIds) {
+      for (const lens of lenses) {
+        for (const column of lens.columns) {
+          if (!actual.has(`${requirementId}:${lens.id}:${column.id}`)) {
+            missing += 1;
+          }
+        }
+      }
+    }
+
+    return missing;
+  }
 </script>
 
 <section class="heatmap-page">
@@ -100,7 +121,17 @@
     Arrow keys preview cells live. Enter/Space pins analysis. Escape unpins.
   </div>
 
-  {#each job.heatmap.lenses as lens}
+  {#if schemaGaps.length || missingCellCount}
+    <div class="schema-warning" role="status">
+      <strong>Incomplete heatmap data</strong>
+      <span>{missingCellCount} expected score cells are missing. Regenerate this job with all required SkillTerrain lenses/columns for the full matrix.</span>
+      {#if schemaGaps.length}
+        <small>{schemaGaps.slice(0, 3).join(' ')}</small>
+      {/if}
+    </div>
+  {/if}
+
+  {#each displayLenses as lens}
     <section class="heatmap-section" aria-labelledby={`${lens.id}-title`}>
       <div class="lens-title">
         <div>

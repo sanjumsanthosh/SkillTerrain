@@ -386,6 +386,29 @@ h3 {
   font-weight: 800;
 }
 
+.schema-warning {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid #fed7aa;
+  border-radius: 18px;
+  background: #fff7ed;
+  color: #9a3412;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.82rem;
+}
+
+.schema-warning strong {
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.schema-warning small {
+  color: #c2410c;
+  font-weight: 700;
+}
+
 .heatmap-section {
   padding: 0.8rem;
   overflow: hidden;

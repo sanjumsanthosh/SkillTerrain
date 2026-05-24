@@ -136,7 +136,7 @@
                         data-cell={`${lens.id}:${column.id}:${requirement.id}`}
                         style={`background:${scoreColor(cell.score)};color:${textColor(cell.score)}`}
                         title={`${requirement.label} / ${column.label}: ${cell.summary}`}
-                        aria-label={`${lens.title}, ${requirement.label}, ${column.label}, score ${cell.score} on a minus one to one scale`}
+                        aria-label={`${lens.title}, ${requirement.label}, ${column.label}, score ${cell.score} on a minus five to five scale`}
                         on:mouseenter={() => preview(lens.id, requirement.id, column.id)}
                         on:focus={() => preview(lens.id, requirement.id, column.id)}
                         on:click={() => pin(lens.id, requirement.id, column.id)}

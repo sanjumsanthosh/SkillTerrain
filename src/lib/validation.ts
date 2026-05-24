@@ -61,7 +61,7 @@ export function validateHeatmapModel(input: unknown): ValidationResult {
     if (requirement.roleSignals !== undefined && (!Array.isArray(requirement.roleSignals) || !requirement.roleSignals.every(isNonEmptyString))) {
       errors.push(`Requirement ${requirement.label || requirement.id} roleSignals must be non-empty strings.`);
     }
-    if (typeof requirement.importance === 'number' && !isScore(requirement.importance)) {
+    if (typeof requirement.importance === 'number' && !isImportance(requirement.importance)) {
       errors.push(`Requirement ${requirement.label || requirement.id} importance must be 0-5.`);
     }
     if (requirementIds.has(requirement.id)) errors.push(`Duplicate requirement id: ${requirement.id}.`);
@@ -98,7 +98,7 @@ export function validateHeatmapModel(input: unknown): ValidationResult {
     if (!lensColumnKeys.has(`${cell.lensId}:${cell.columnId}`)) {
       errors.push(`Cell references unknown lens/column: ${cell.lensId}/${cell.columnId}.`);
     }
-    if (!isScore(cell.score)) errors.push(`Cell ${key} score must be between -1 and 1.`);
+    if (!isScore(cell.score)) errors.push(`Cell ${key} score must be between -5 and 5.`);
     if (cell.scoreLabel !== undefined && !isNonEmptyString(cell.scoreLabel)) errors.push(`Cell ${key} scoreLabel must be a non-empty string.`);
     if (!isNonEmptyString(cell.summary)) errors.push(`Cell ${key} needs a summary.`);
     if (!Array.isArray(cell.roleEvidence) || cell.roleEvidence.length === 0 || !cell.roleEvidence.every(isNonEmptyString)) {
@@ -146,5 +146,9 @@ function isNonEmptyString(value: unknown): value is string {
 }
 
 function isScore(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= -1 && value <= 1;
+  return typeof value === 'number' && Number.isFinite(value) && value >= -5 && value <= 5;
+}
+
+function isImportance(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 5;
 }

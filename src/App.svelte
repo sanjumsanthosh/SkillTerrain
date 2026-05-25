@@ -4,6 +4,7 @@
   import HeatmapGrid from './components/HeatmapGrid.svelte';
   import ImportJob from './components/ImportJob.svelte';
   import JobManager from './components/JobManager.svelte';
+  import VaultView from './components/VaultView.svelte';
   import { readinessScore } from './lib/scoring';
   import {
     createEmptyWorkspace,
@@ -26,10 +27,36 @@
   let workspace: SkillTerrainWorkspace = createEmptyWorkspace();
   let ready = false;
 
+  // ── Vault (shared read-only) mode ──────────────────────────────────────────
+  // Detected when the URL hash matches: #<8-char fileId>_<key>
+  // e.g. https://sanjumsanthosh.github.io/SkillTerrain/#a7b8c9d0_mysecretkey15
+  let vaultParams: { fileId: string; key: string } | null = null;
+
+  function parseVaultHash(hash: string): { fileId: string; key: string } | null {
+    const stripped = hash.startsWith('#') ? hash.slice(1) : hash;
+    const underscoreIdx = stripped.indexOf('_');
+    if (underscoreIdx === -1) return null;
+    const fileId = stripped.slice(0, underscoreIdx);
+    const key    = stripped.slice(underscoreIdx + 1);
+    // fileId must be 8 hex chars; key must be at least 10 chars
+    if (/^[0-9a-f]{8}$/.test(fileId) && key.length >= 10) {
+      return { fileId, key };
+    }
+    return null;
+  }
+
   $: activeJob = workspace.jobs.find((job) => job.id === workspace.activeJobId);
   $: readiness = activeJob ? readinessScore(activeJob.heatmap) : 0;
 
   onMount(() => {
+    // Check for vault share link first — takes full priority over normal routing
+    const vault = parseVaultHash(window.location.hash);
+    if (vault) {
+      vaultParams = vault;
+      ready = true;
+      return;
+    }
+
     const loaded = loadWorkspace();
     const view = viewFromHash();
     workspace = view ? setActiveView(loaded, view) : loaded;
@@ -96,6 +123,9 @@
   }
 </script>
 
+{#if vaultParams}
+  <VaultView fileId={vaultParams.fileId} key={vaultParams.key} />
+{:else}
 <main class="app-shell">
   <header class="topbar">
     <div>
@@ -162,3 +192,4 @@
     <CompareView jobs={workspace.jobs} />
   {/if}
 </main>
+{/if}

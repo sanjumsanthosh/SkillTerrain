@@ -8,3 +8,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Vault secrets — never commit key mappings to the public repo
+.vault-map.json
+
+# The private terrain-vault repo is cloned here locally but should not be nested
+terrain-vault/

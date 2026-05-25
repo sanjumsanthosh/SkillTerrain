@@ -61,9 +61,42 @@ src/
     global.css
 ```
 
+## Sharing a heatmap
+
+SkillTerrain supports encrypted share links so you can send a recruiter a read-only snapshot of a single job heatmap without exposing your data.
+
+Share URLs look like:
+```
+https://sanjumsanthosh.github.io/SkillTerrain/#a7b8c9d0_mysecretkey15
+```
+
+The fragment (`#...`) is never sent to GitHub's servers. Decryption happens entirely in the visitor's browser.
+
+**To generate a share link**, use the companion private repo [terrain-vault](https://github.com/sanjumsanthosh/terrain-vault):
+
+```bash
+# 1. Export a single job as JSON from SkillTerrain (Manage Jobs → export)
+# 2. In terrain-vault, run:
+node tools/encrypt.js --input path/to/job.json --label "Recruiter @ Acme"
+# → writes the .enc file to SkillTerrain/public/data/
+# → prints your shareable URL
+# → logs the entry to .vault-map.json
+
+# 3. Commit and push the .enc file from SkillTerrain
+# 4. Share the URL
+
+# Forgot a URL? Look it up:
+node tools/list.js --label "Acme"
+```
+
+See the [terrain-vault README](https://github.com/sanjumsanthosh/terrain-vault) for full setup and usage instructions.
+
+---
+
 ## Privacy model
 
 - No backend server.
 - No API keys.
 - No network calls from the app.
 - Saved maps stay in the current browser profile unless exported by the user.
+- Shared `.enc` files are AES-128-GCM encrypted — the hosted file is useless without the key in the URL fragment.

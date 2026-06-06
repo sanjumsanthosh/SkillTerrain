@@ -15,8 +15,9 @@
   onMount(async () => {
     try {
       // 1. Fetch the encrypted blob
+      // import.meta.env.BASE_URL = '/SkillTerrain/' on GH Pages, '/' in dev
       state = 'loading';
-      const res = await fetch(`/data/${fileId}.enc`);
+      const res = await fetch(`${import.meta.env.BASE_URL}data/${fileId}.enc`);
       if (!res.ok) {
         throw new Error(`File not found (${res.status}). The link may be invalid or expired.`);
       }

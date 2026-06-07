@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import HeatmapGrid from './HeatmapGrid.svelte';
-  import type { SkillTerrainJob } from '../lib/types';
+  import type { HeatmapModel, SkillTerrainJob } from '../lib/types';
 
   export let fileId: string;
   export let key: string;
@@ -50,11 +50,11 @@
 
       // 5. Parse and render
       const rawJson = new TextDecoder().decode(decryptedBuffer);
-      job = JSON.parse(rawJson) as SkillTerrainJob;
+      job = toSharedJob(JSON.parse(rawJson));
       state = 'ready';
     } catch (err) {
       state = 'error';
-      if (err instanceof Error && err.message.includes('File not found')) {
+      if (err instanceof Error && (err.message.includes('File not found') || err.message.includes('Unsupported payload'))) {
         errorMessage = err.message;
       } else {
         // Most likely a decryption failure — wrong key
@@ -63,6 +63,51 @@
       console.error('[VaultView]', err);
     }
   });
+
+  function toSharedJob(payload: unknown): SkillTerrainJob {
+    if (isRecord(payload) && isHeatmapModel(payload.heatmap)) {
+      const heatmap = payload.heatmap;
+      return {
+        id: typeof payload.id === 'string' ? payload.id : `shared-${fileId}`,
+        title: typeof payload.title === 'string' && payload.title.trim() ? payload.title : heatmap.targetRole.title,
+        company: typeof payload.company === 'string' ? payload.company : heatmap.targetRole.company,
+        sourceDescription: typeof payload.sourceDescription === 'string' ? payload.sourceDescription : '',
+        notes: typeof payload.notes === 'string' ? payload.notes : undefined,
+        heatmap,
+        createdAt: typeof payload.createdAt === 'string' ? payload.createdAt : '',
+        updatedAt: typeof payload.updatedAt === 'string' ? payload.updatedAt : '',
+      };
+    }
+
+    if (isHeatmapModel(payload)) {
+      return {
+        id: `shared-${fileId}`,
+        title: payload.targetRole.title,
+        company: payload.targetRole.company,
+        sourceDescription: '',
+        heatmap: payload,
+        createdAt: '',
+        updatedAt: '',
+      };
+    }
+
+    throw new Error('Unsupported payload format. Expected a SkillTerrain job export or heatmap JSON.');
+  }
+
+  function isHeatmapModel(value: unknown): value is HeatmapModel {
+    return (
+      isRecord(value) &&
+      isRecord(value.targetRole) &&
+      typeof value.targetRole.title === 'string' &&
+      Array.isArray(value.requirements) &&
+      Array.isArray(value.lenses) &&
+      Array.isArray(value.cells)
+    );
+  }
+
+  function isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value) && typeof value === 'object';
+  }
 </script>
 
 <div class="vault-shell">
